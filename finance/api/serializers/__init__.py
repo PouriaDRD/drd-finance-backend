@@ -1,5 +1,6 @@
-from .category import CategorySerializer
+from .category import CategorySerializer, CategoryCreateSerializer
 
 __all__ = [
     "CategorySerializer",
+    "CategoryCreateSerializer",
 ]
