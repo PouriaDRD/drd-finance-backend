@@ -240,7 +240,7 @@ class TransactionUpdateAPIView(UpdateAPIView):
     throttle_scope = "user"
     throttle_classes = [ScopedRateThrottle]
 
-    serializer_class = TransactionCreateAPIView
+    serializer_class = TransactionCreateSerializer
 
     def patch(self, request: Request, *args, **kwargs):
         """
