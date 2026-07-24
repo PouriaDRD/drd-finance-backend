@@ -47,9 +47,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "-created_at",
     )
 
-    list_per_page = 100
-
-    save_on_top = True
+    list_per_page = 25
 
     actions = (
         "mark_as_income",

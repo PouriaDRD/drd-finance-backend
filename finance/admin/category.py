@@ -41,7 +41,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ("user",)
 
-    list_per_page = 50
+    list_per_page = 25
 
     fieldsets = (
         (
