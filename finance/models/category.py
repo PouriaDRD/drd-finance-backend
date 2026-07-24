@@ -29,6 +29,12 @@ class CategoryModel(models.Model):
         help_text="Category name (e.g., Food, Salary, Rent)",
     )
 
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Category description",
+    )
+
     type = models.CharField(
         max_length=10,
         choices=CategoryType.choices,
