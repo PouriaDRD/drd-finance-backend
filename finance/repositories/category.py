@@ -1,3 +1,6 @@
+from django.shortcuts import get_object_or_404
+
+
 from finance.enums import CategoryType
 from finance.models import CategoryModel
 
@@ -10,6 +13,34 @@ class CategoryRepository:
         return CategoryModel.objects.create(**kwargs)
 
     @staticmethod
+    def update(
+        category: CategoryModel,
+        **kwargs,
+    ) -> CategoryModel:
+        for key, value in kwargs.items():
+            setattr(
+                category,
+                key,
+                value,
+            )
+
+        category.save(update_fields=list(kwargs.keys()))
+
+        return category
+
+    @staticmethod
+    def get_user_category(
+        user_id,
+        category_id,
+    ) -> CategoryModel:
+
+        return get_object_or_404(
+            CategoryModel,
+            id=category_id,
+            user_id=user_id,
+        )
+
+    @staticmethod
     def get_user_categories(user_id: str):
         return CategoryModel.objects.filter(user_id=user_id).order_by("-created_at")
 
@@ -20,9 +51,20 @@ class CategoryRepository:
         ).order_by("-created_at")
 
     @staticmethod
-    def exists(user_id: str, name: str, category_type: CategoryType) -> bool:
-        return CategoryModel.objects.filter(
+    def exists(
+        user_id,
+        name,
+        category_type,
+        exclude_id=None,
+    ) -> bool:
+
+        queryset = CategoryModel.objects.filter(
             user_id=user_id,
             name=name,
             type=category_type,
-        ).exists()
+        )
+
+        if exclude_id:
+            queryset = queryset.exclude(id=exclude_id)
+
+        return queryset.exists()

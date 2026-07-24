@@ -4,7 +4,7 @@ from rest_framework.request import Request
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView
 
 from config.utils import APIResponse
 from finance.services import CategoryService
@@ -142,5 +142,65 @@ class CategoryCreateAPIView(CreateAPIView):
 
             return APIResponse.error(
                 message="خطا در ایجاد دسته بندی رخ داد.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class CategoryUpdateAPIView(UpdateAPIView):
+    """
+    Update existing category.
+    """
+
+    http_method_names = ["patch"]
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = CategoryCreateSerializer
+
+    throttle_scope = "user"
+    throttle_classes = [ScopedRateThrottle]
+
+    def patch(self, request: Request, *args, **kwargs):
+
+        try:
+            serializer = self.get_serializer(data=request.data)
+
+            serializer.is_valid(raise_exception=True)
+
+            category_id = kwargs.get("category_id")
+            category = CategoryService.update_category(
+                user=request.user,
+                category_id=category_id,
+                **serializer.validated_data,
+            )
+
+            response_serializer = CategorySerializer(category)
+
+            logger.info(
+                f"Category updated successfully: {category}, user: {request.user}"
+            )
+            return APIResponse.success(
+                data=response_serializer.data,
+                message="دسته بندی با موفقیت به روز شد.",
+                status_code=status.HTTP_200_OK,
+            )
+
+        except ValidationError as e:
+            logger.warning(f"Error updating category: {e.get_codes()}")
+            if "name" in e.get_codes():  # type: ignore
+                return APIResponse.error(
+                    message="دسته بندی با این نام و نوع در حال حاضر وجود دارد.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            return APIResponse.error(
+                message="خطا در به روز رسانی دسته بندی رخ داد.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as e:
+            logger.exception(f"Category update failed: {e}")
+
+            return APIResponse.error(
+                message="خطا در به روز رسانی دسته بندی رخ داد.",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

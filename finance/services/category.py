@@ -38,3 +38,44 @@ class CategoryService:
             user=user,
             **kwargs,
         )
+
+    @staticmethod
+    @transaction.atomic
+    def update_category(
+        *,
+        user,
+        category_id,
+        **data,
+    ) -> CategoryModel:
+
+        category = CategoryRepository.get_user_category(
+            user_id=user.id,
+            category_id=category_id,
+        )
+
+        name = data.get(
+            "name",
+            category.name,
+        )
+
+        category_type = data.get(
+            "type",
+            category.type,
+        )
+
+        duplicate = CategoryRepository.exists(
+            user_id=user.id,
+            name=name,
+            category_type=category_type,
+            exclude_id=category.id,
+        )
+
+        if duplicate:
+            raise ValidationError(
+                {"name": ("دسته بندی با این نام و نوع در حال حاضر وجود دارد.")}
+            )
+
+        return CategoryRepository.update(
+            category,
+            **data,
+        )

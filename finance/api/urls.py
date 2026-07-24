@@ -4,6 +4,7 @@ from .views import (
     MyCategoriesAPIView,
     MyActiveCategoriesAPIView,
     CategoryCreateAPIView,
+    CategoryUpdateAPIView,
 )
 
 urlpatterns = [
@@ -21,5 +22,10 @@ urlpatterns = [
         route="create-category/",
         view=CategoryCreateAPIView.as_view(),
         name="create-category",
+    ),
+    path(
+        route="update-category/<uuid:category_id>/",
+        view=CategoryUpdateAPIView.as_view(),
+        name="update-category",
     ),
 ]
