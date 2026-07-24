@@ -52,6 +52,7 @@ class CategoryAdmin(admin.ModelAdmin):
                     "user",
                     "name",
                     "type",
+                    "description",
                 )
             },
         ),

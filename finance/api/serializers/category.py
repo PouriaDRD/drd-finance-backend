@@ -12,6 +12,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "id",
             "name",
             "type",
+            "description",
             # "icon",
             # "color",
             "is_archived",
@@ -48,6 +49,14 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
         },
     )
 
+    description = serializers.CharField(
+        help_text="Category description",
+        min_length=3,
+        max_length=256,
+        required=False,
+        allow_blank=True,
+    )
+
     type = serializers.ChoiceField(choices=CategoryType.choices)
 
     is_archived = serializers.BooleanField(default=False)
@@ -58,6 +67,7 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
         fields = (
             "name",
             "type",
+            "description",
             "is_archived",
             # "icon",
             # "color",
