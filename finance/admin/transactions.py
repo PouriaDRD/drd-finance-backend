@@ -13,6 +13,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "type_badge",
         "date",
         "month",
+        "year",
         "category",
         "description_short",
     )
@@ -20,6 +21,7 @@ class TransactionAdmin(admin.ModelAdmin):
     list_filter = (
         "type",
         "month",
+        "year",
         "date",
         "category",
     )
@@ -73,6 +75,7 @@ class TransactionAdmin(admin.ModelAdmin):
                     "amount",
                     "description",
                     "month",
+                    "year",
                     "date",
                 )
             },

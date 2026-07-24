@@ -9,14 +9,11 @@ class CategoryRepository:
     """Only database operations."""
 
     @staticmethod
-    def create(**kwargs) -> CategoryModel:
+    def create(**kwargs):
         return CategoryModel.objects.create(**kwargs)
 
     @staticmethod
-    def update(
-        category: CategoryModel,
-        **kwargs,
-    ) -> CategoryModel:
+    def update(category: CategoryModel, **kwargs):
         for key, value in kwargs.items():
             setattr(
                 category,
@@ -29,10 +26,7 @@ class CategoryRepository:
         return category
 
     @staticmethod
-    def get_user_category(
-        user_id,
-        category_id,
-    ) -> CategoryModel:
+    def get_user_category(user_id, category_id):
 
         return get_object_or_404(
             CategoryModel,
@@ -51,12 +45,7 @@ class CategoryRepository:
         ).order_by("-created_at")
 
     @staticmethod
-    def exists(
-        user_id,
-        name,
-        category_type,
-        exclude_id=None,
-    ) -> bool:
+    def exists(user_id, name, category_type, exclude_id=None):
 
         queryset = CategoryModel.objects.filter(
             user_id=user_id,

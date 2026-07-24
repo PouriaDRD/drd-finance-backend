@@ -5,6 +5,10 @@ from finance.models import CategoryModel
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """
+    Category serializer for list
+    """
+
     class Meta:
         model = CategoryModel
 
@@ -34,7 +38,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class CategoryCreateSerializer(serializers.ModelSerializer):
     """
-    Serializer for creating category.
+    Serializer for create and update category.
     """
 
     name = serializers.CharField(
