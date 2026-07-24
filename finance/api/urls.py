@@ -8,6 +8,9 @@ from .views import (
     MyTransactionsAPIView,
     PersianMonthSummaryAPIView,
     YearlySummaryAPIView,
+    TransactionCreateAPIView,
+    TransactionUpdateAPIView,
+    TransactionDeleteAPIView,
 )
 
 urlpatterns = [
@@ -17,17 +20,17 @@ urlpatterns = [
         name="my-categories",
     ),
     path(
-        route="my-active-categories/",
+        route="my-categories/active/",
         view=MyActiveCategoriesAPIView.as_view(),
         name="my-active-categories",
     ),
     path(
-        route="create-category/",
+        route="my-categories/create/",
         view=CategoryCreateAPIView.as_view(),
         name="create-category",
     ),
     path(
-        route="update-category/<uuid:category_id>/",
+        route="my-categories/<uuid:category_id>/update/",
         view=CategoryUpdateAPIView.as_view(),
         name="update-category",
     ),
@@ -45,5 +48,23 @@ urlpatterns = [
         "my-transactions/summary/<int:year>/",
         YearlySummaryAPIView.as_view(),
         name="transaction-yearly-summary",
+    ),
+    # Create transaction
+    path(
+        "my-transactions/create/",
+        TransactionCreateAPIView.as_view(),
+        name="transaction-create",
+    ),
+    # Update transaction
+    path(
+        "my-transactions/<uuid:transaction_id>/update/",
+        TransactionUpdateAPIView.as_view(),
+        name="transaction-update",
+    ),
+    # Delete transaction
+    path(
+        "my-transactions/<uuid:transaction_id>/delete/",
+        TransactionDeleteAPIView.as_view(),
+        name="transaction-delete",
     ),
 ]
