@@ -147,8 +147,6 @@ class TransactionModel(models.Model):
                 if self.category.type == CategoryType.INCOME
                 else TransactionType.EXPENSE
             )
-        else:
-            self.type = TransactionType.INCOME
 
         if self.type == TransactionType.INCOME:
             if self.amount < 0:

@@ -1,11 +1,11 @@
 import jdatetime
 from datetime import date
-from typing import Optional
+from typing import Optional, cast
 from django.utils import timezone
 from django.db.models import Sum, Q, Count
 
-from finance.enums import TransactionType
-from finance.models import TransactionModel
+from finance.enums import TransactionType, CategoryType
+from finance.models import TransactionModel, CategoryModel
 
 
 class TransactionRepository:
@@ -38,6 +38,16 @@ class TransactionRepository:
         update_fields = list(kwargs.keys())
         if "date" in kwargs:
             update_fields.extend(["month", "year"])
+
+        category = cast(Optional[CategoryModel], kwargs.get("category", None))
+
+        if category:
+            transaction.type = (
+                TransactionType.INCOME
+                if category.type == CategoryType.INCOME
+                else TransactionType.EXPENSE
+            )
+            update_fields.extend(["type"])
 
         transaction.save(update_fields=update_fields)
 
