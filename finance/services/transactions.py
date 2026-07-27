@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
 
-from finance.enums import TransactionType
+# from finance.enums import TransactionType
 from finance.repositories import TransactionRepository
 from finance.models import TransactionModel, CategoryModel
 
@@ -49,7 +49,7 @@ class TransactionService:
         transaction_data = {
             "user": user,
             "amount": kwargs.get("amount", 0),
-            "type": kwargs.get("type", TransactionType.INCOME),
+            # "type": kwargs.get("type", TransactionType.INCOME),
             "description": kwargs.get("description", ""),
             "date": kwargs.get("date", timezone.now()),
             "category": category,

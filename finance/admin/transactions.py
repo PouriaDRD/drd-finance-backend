@@ -71,7 +71,7 @@ class TransactionAdmin(admin.ModelAdmin):
             "Transaction",
             {
                 "fields": (
-                    "type",
+                    # "type",
                     "amount",
                     "description",
                     "month",

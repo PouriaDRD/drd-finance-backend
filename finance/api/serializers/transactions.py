@@ -119,14 +119,14 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         },
     )
 
-    type = serializers.ChoiceField(
-        choices=TransactionType.choices,
-        required=True,
-        error_messages={
-            "required": "نوع تراکنش الزامی است.",
-            "invalid_choice": "نوع تراکنش معتبر نیست.",
-        },
-    )
+    # type = serializers.ChoiceField(
+    #     choices=TransactionType.choices,
+    #     required=True,
+    #     error_messages={
+    #         "required": "نوع تراکنش الزامی است.",
+    #         "invalid_choice": "نوع تراکنش معتبر نیست.",
+    #     },
+    # )
 
     description = serializers.CharField(
         required=False,
@@ -152,7 +152,7 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         fields = (
             "category_id",
             "amount",
-            "type",
+            # "type",
             "description",
             "date",
         )

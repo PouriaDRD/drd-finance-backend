@@ -6,9 +6,15 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from .category import CategoryModel
-from finance.enums import TransactionType
+from finance.enums import TransactionType, CategoryType
 
 User = get_user_model()
+
+CURRENT_MONTH = jdatetime.date.today().month
+CURRENT_YEAR = jdatetime.date.today().year
+
+MIN_YEAR = 1400
+MAX_YEAR = CURRENT_YEAR
 
 
 class TransactionModel(models.Model):
@@ -118,16 +124,31 @@ class TransactionModel(models.Model):
         if not 1 <= self.month <= 12:
             raise ValidationError({"month": "Month must be between 1 and 12."})
 
-        if self.year < 1405 or self.year > 1500:
-            raise ValidationError({"year": "Year must be between 1405 and 1500."})
+        if self.month > CURRENT_MONTH:
+            raise ValidationError(
+                {"month": f"Month can not be greater than {CURRENT_MONTH}."}
+            )
+
+        if self.year < MIN_YEAR or self.year > MAX_YEAR:
+            raise ValidationError(
+                {"year": f"Year must be between {MIN_YEAR} and {MAX_YEAR}."}
+            )
 
     def save(self, *args, **kwargs):
         """Auto-set month and validate before saving"""
-
         if self.date:
             persian = jdatetime.date.fromgregorian(date=self.date)
             self.month = persian.month
             self.year = persian.year
+
+        if self.category and self.category.type:
+            self.type = (
+                TransactionType.INCOME
+                if self.category.type == CategoryType.INCOME
+                else TransactionType.EXPENSE
+            )
+        else:
+            self.type = TransactionType.INCOME
 
         if self.type == TransactionType.INCOME:
             if self.amount < 0:
