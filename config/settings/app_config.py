@@ -19,7 +19,7 @@ ENV_FILE = ROOT_DIR / ".env"
 # print("Loading .env from:", ENV_FILE)
 # print("Exists:", ENV_FILE.exists())
 
-load_dotenv(ENV_FILE, override=True)
+load_dotenv(ENV_FILE, override=False)
 
 # print("CORS_ALLOWED_ORIGINS =", os.getenv("CORS_ALLOWED_ORIGINS"))
 # print("=" * 60)
