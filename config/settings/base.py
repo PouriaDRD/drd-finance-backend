@@ -143,31 +143,88 @@ SIMPLE_JWT = {
 
 
 # ---------------------------------------------------------------
-# Logging Configuration (FIXED)
+# Logging Configuration
 # ---------------------------------------------------------------
 
-# LOG_DIR = BASE_DIR / "logs"
-# LOG_DIR.mkdir(parents=True, exist_ok=True)
-
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} [{module}:{lineno}] {message}",
+            "style": "{",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        },
         "simple": {
-            "format": "[{asctime}] [{levelname}] [{name}] {message}",
+            "format": "{asctime} {levelname} {message}",
             "style": "{",
             "datefmt": "%d/%b/%Y %H:%M:%S",
         },
     },
     "handlers": {
+        "info_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "info.log",
+            "maxBytes": 1024 * 1024 * 10,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
+        "warning_file": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "warning.log",
+            "maxBytes": 1024 * 1024 * 10,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "error.log",
+            "maxBytes": 1024 * 1024 * 10,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
         "console": {
+            "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
     },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
+    "loggers": {
+        "root": {
+            "handlers": [
+                "console",
+                "info_file",
+                "warning_file",
+                "error_file",
+            ],
+            "level": "INFO",
+        },
+        "django": {
+            "handlers": [
+                "console",
+                "info_file",
+                "warning_file",
+                "error_file",
+            ],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": [
+                "error_file",
+                "console",
+            ],
+            "level": "ERROR",
+            "propagate": False,
+        },
     },
 }
