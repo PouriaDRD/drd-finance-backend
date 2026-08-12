@@ -3,6 +3,10 @@ from django.utils.html import format_html
 from django.db.models import Sum, Case, When, IntegerField, Count
 
 from finance.models import TransactionModel
+from finance.exports import (
+    export_transactions_csv,
+    export_transactions_excel,
+)
 
 
 @admin.register(TransactionModel)
@@ -54,6 +58,8 @@ class TransactionAdmin(admin.ModelAdmin):
     actions = (
         "mark_as_income",
         "mark_as_expense",
+        "export_selected_csv",
+        "export_selected_excel",
     )
 
     fieldsets = (
@@ -163,7 +169,7 @@ class TransactionAdmin(admin.ModelAdmin):
             </span>
             """,
             color,
-            obj.get_type_display(),
+            obj.get_type_display,
         )
 
     @admin.display(description="Description")
@@ -197,6 +203,24 @@ class TransactionAdmin(admin.ModelAdmin):
             request,
             f"{updated} transaction(s) marked as Expense.",
         )
+
+    @admin.action(description="Export selected transactions as CSV")
+    def export_selected_csv(self, request, queryset):
+        queryset = queryset.select_related(
+            "user",
+            "category",
+        )
+
+        return export_transactions_csv(queryset)
+
+    @admin.action(description="Export selected transactions as Excel")
+    def export_selected_excel(self, request, queryset):
+        queryset = queryset.select_related(
+            "user",
+            "category",
+        )
+
+        return export_transactions_excel(queryset)
 
     # --------------------------------------------------
     # Dashboard Summary

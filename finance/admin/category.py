@@ -3,6 +3,10 @@ from django.db.models import Count
 from django.utils.html import format_html
 
 from finance.models import CategoryModel
+from finance.exports import (
+    export_categories_csv,
+    export_categories_excel,
+)
 
 
 @admin.register(CategoryModel)
@@ -132,7 +136,7 @@ class CategoryAdmin(admin.ModelAdmin):
             </span>
             """,
             color,
-            obj.get_type_display(),
+            obj.get_type_display,
         )
 
     actions = (
@@ -140,6 +144,8 @@ class CategoryAdmin(admin.ModelAdmin):
         "unarchive_selected",
         "mark_as_income",
         "mark_as_expense",
+        "export_selected_csv",
+        "export_selected_excel",
     )
 
     @admin.action(description="Archive selected categories")
@@ -173,3 +179,19 @@ class CategoryAdmin(admin.ModelAdmin):
             request,
             f"{updated} category(ies) marked as Expense.",
         )
+
+    @admin.action(description="Export selected categories as CSV")
+    def export_selected_csv(self, request, queryset):
+        queryset = queryset.select_related("user").annotate(
+            _transaction_count=Count("transactions")
+        )
+
+        return export_categories_csv(queryset)
+
+    @admin.action(description="Export selected categories as Excel")
+    def export_selected_excel(self, request, queryset):
+        queryset = queryset.select_related("user").annotate(
+            _transaction_count=Count("transactions")
+        )
+
+        return export_categories_excel(queryset)

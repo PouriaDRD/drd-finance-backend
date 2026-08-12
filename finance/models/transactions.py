@@ -116,6 +116,14 @@ class TransactionModel(models.Model):
         sign = "+" if self.is_income else "-"
         return f"{sign}{self.absolute_amount:,}"
 
+    @property
+    def get_type_display(self):
+        """
+        Return formatted type for display.
+        """
+
+        return "درآمد" if self.is_income else "هزینه"
+
     def clean(self):
         """Validate amount and date"""
         if self.amount == 0:

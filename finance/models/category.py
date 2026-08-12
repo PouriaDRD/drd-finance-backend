@@ -80,3 +80,11 @@ class CategoryModel(models.Model):
     @property
     def is_income(self):
         return self.type == CategoryType.INCOME
+
+    @property
+    def get_type_display(self):
+        """
+        Return formatted type for display.
+        """
+
+        return "درآمد" if self.is_income else "هزینه"
