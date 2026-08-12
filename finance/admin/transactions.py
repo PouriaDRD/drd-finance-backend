@@ -1,5 +1,8 @@
+from django.urls import path
 from django.contrib import admin
+from django.shortcuts import render
 from django.utils.html import format_html
+from django.http import HttpResponse, HttpRequest
 from django.db.models import Sum, Case, When, IntegerField, Count
 
 from finance.models import TransactionModel
@@ -7,10 +10,14 @@ from finance.exports import (
     export_transactions_csv,
     export_transactions_excel,
 )
+from finance.forms import TransactionImportForm
+from finance.imports import TransactionImportService
 
 
 @admin.register(TransactionModel)
 class TransactionAdmin(admin.ModelAdmin):
+    change_list_template = "admin/transaction/change_list.html"
+
     list_display = (
         "user",
         "formatted_amount",
@@ -231,6 +238,7 @@ class TransactionAdmin(admin.ModelAdmin):
         request,
         extra_context=None,
     ):
+
         extra_context = extra_context or {}
 
         totals = self.get_queryset(request).aggregate(
@@ -257,17 +265,102 @@ class TransactionAdmin(admin.ModelAdmin):
         )
 
         income = totals["income_total"] or 0
+
         expense = totals["expense_total"] or 0
 
         extra_context.update(
             {
                 "income_total": f"{income:,}",
                 "expense_total": f"{expense:,}",
-                "balance_total": f"{income - expense:,}",
+                "balance_total": (f"{income - abs(expense):,}"),
+                # Important:
+                # This can be used by your change-list
+                # template/button later.
+                "import_url": ("import/"),
             }
         )
 
         return super().changelist_view(
             request,
             extra_context=extra_context,
+        )
+
+    # =====================================================
+    # URLs
+    # =====================================================
+
+    def get_urls(self):
+
+        urls = super().get_urls()
+
+        custom_urls = [
+            path(
+                "import/",
+                self.admin_site.admin_view(self.import_view),
+                name=("finance_transaction_import"),
+            ),
+        ]
+
+        return custom_urls + urls
+
+    # =====================================================
+    # Import View
+    # =====================================================
+
+    def import_view(
+        self,
+        request: HttpRequest,
+    ):
+
+        result = None
+        form = TransactionImportForm()
+
+        if request.method == "POST":
+
+            form = TransactionImportForm(
+                request.POST,
+                request.FILES,
+            )
+
+            if form.is_valid():
+
+                uploaded_file = form.cleaned_data["file"]
+
+                filename = uploaded_file.name.lower()
+
+                try:
+
+                    if filename.endswith(".csv"):
+
+                        result = TransactionImportService.import_csv(
+                            user=request.user,
+                            file=uploaded_file,
+                        )
+
+                    elif filename.endswith(".xlsx"):
+
+                        result = TransactionImportService.import_excel(
+                            user=request.user,
+                            file=uploaded_file,
+                        )
+
+                except Exception as exc:
+
+                    form.add_error(
+                        "file",
+                        f"خطا در پردازش فایل: {exc}",
+                    )
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Import Transactions",
+            "form": form,
+            "result": result,
+            "opts": self.model._meta,
+        }
+
+        return render(
+            request,
+            "admin/transaction/import.html",
+            context,
         )

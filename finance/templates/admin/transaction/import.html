@@ -1,0 +1,381 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+
+<style>
+    .finance-import-page {
+        max-width: 1000px;
+    }
+
+    .finance-import-card {
+        margin-top: 20px;
+        margin-bottom: 25px;
+        padding: 24px;
+        border: 1px solid var(--hairline-color);
+        border-radius: 10px;
+        background: var(--body-bg);
+        color: var(--body-fg);
+    }
+
+    .finance-import-card h2 {
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: var(--body-fg);
+    }
+
+    .finance-import-description {
+        margin: 0 0 20px;
+        color: var(--body-quiet-color);
+    }
+
+    .finance-import-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .finance-import-form p {
+        margin: 0;
+    }
+
+    .finance-import-form input[type="file"] {
+        max-width: 100%;
+    }
+
+    .finance-import-submit {
+        width: fit-content;
+        padding: 10px 20px;
+        border: 0;
+        border-radius: 7px;
+        cursor: pointer;
+    }
+
+    /* =========================================================
+       Summary
+       ========================================================= */
+
+    .finance-import-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .finance-import-stat {
+        padding: 18px;
+        border: 1px solid var(--hairline-color);
+        border-radius: 10px;
+        background: var(--body-bg);
+        color: var(--body-fg);
+    }
+
+    .finance-import-stat-label {
+        color: var(--body-quiet-color);
+        font-size: 13px;
+    }
+
+    .finance-import-stat-value {
+        display: block;
+        margin-top: 5px;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--body-fg);
+    }
+
+    /* =========================================================
+       Status cards
+       ========================================================= */
+
+    .finance-import-stat--created {
+        border-color: color-mix(in srgb,
+                var(--success-fg) 35%,
+                var(--hairline-color));
+        background: color-mix(in srgb,
+                var(--success-fg) 8%,
+                var(--body-bg));
+    }
+
+    .finance-import-stat--created .finance-import-stat-label,
+    .finance-import-stat--created .finance-import-stat-value {
+        color: var(--success-fg);
+    }
+
+    .finance-import-stat--skipped {
+        border-color: color-mix(in srgb,
+                var(--warning-fg) 35%,
+                var(--hairline-color));
+        background: color-mix(in srgb,
+                var(--warning-fg) 8%,
+                var(--body-bg));
+    }
+
+    .finance-import-stat--skipped .finance-import-stat-label,
+    .finance-import-stat--skipped .finance-import-stat-value {
+        color: var(--warning-fg);
+    }
+
+    .finance-import-stat--failed {
+        border-color: color-mix(in srgb,
+                var(--error-fg) 35%,
+                var(--hairline-color));
+        background: color-mix(in srgb,
+                var(--error-fg) 8%,
+                var(--body-bg));
+    }
+
+    .finance-import-stat--failed .finance-import-stat-label,
+    .finance-import-stat--failed .finance-import-stat-value {
+        color: var(--error-fg);
+    }
+
+    /* =========================================================
+       Errors
+       ========================================================= */
+
+    .finance-import-errors {
+        padding: 20px;
+        border: 1px solid color-mix(in srgb,
+                var(--error-fg) 35%,
+                var(--hairline-color));
+        border-radius: 10px;
+        background: var(--body-bg);
+        color: var(--body-fg);
+    }
+
+    .finance-import-errors h2 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        color: var(--error-fg);
+    }
+
+    .finance-import-error-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .finance-import-error-table th {
+        padding: 10px;
+        text-align: left;
+        color: var(--body-fg);
+        border-bottom: 1px solid var(--hairline-color);
+        font-weight: 600;
+    }
+
+    .finance-import-error-table td {
+        padding: 10px;
+        color: var(--body-fg);
+        border-bottom: 1px solid var(--hairline-color);
+    }
+
+    .finance-import-error-table td:first-child {
+        width: 100px;
+        font-weight: 600;
+    }
+
+    .finance-import-error-message {
+        color: var(--error-fg) !important;
+    }
+
+    /* =========================================================
+       Responsive
+       ========================================================= */
+
+    @media (max-width: 900px) {
+        .finance-import-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .finance-import-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .finance-import-card {
+            padding: 18px;
+        }
+    }
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="finance-import-page">
+
+    <h1>
+        Import Transactions
+    </h1>
+
+
+    <!-- =====================================================
+         Upload
+         ===================================================== -->
+
+    <div class="finance-import-card">
+
+        <h2>
+            Upload file
+        </h2>
+
+        <p class="finance-import-description">
+            فایل CSV یا Excel تراکنش‌ها را انتخاب کنید.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" class="finance-import-form">
+
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit" class="default finance-import-submit">
+                Import
+            </button>
+
+        </form>
+
+    </div>
+
+
+    {% if result %}
+
+    <!-- =================================================
+             Summary
+             ================================================= -->
+
+    <div class="finance-import-summary">
+
+        <!-- Total -->
+
+        <div class="finance-import-stat">
+
+            <div class="finance-import-stat-label">
+                Total
+            </div>
+
+            <strong class="finance-import-stat-value">
+                {{ result.total }}
+            </strong>
+
+        </div>
+
+
+        <!-- Created -->
+
+        <div class="
+                finance-import-stat
+                finance-import-stat--created
+            ">
+
+            <div class="finance-import-stat-label">
+                Created
+            </div>
+
+            <strong class="finance-import-stat-value">
+                {{ result.created }}
+            </strong>
+
+        </div>
+
+
+        <!-- Skipped -->
+
+        <div class="
+                finance-import-stat
+                finance-import-stat--skipped
+            ">
+
+            <div class="finance-import-stat-label">
+                Skipped
+            </div>
+
+            <strong class="finance-import-stat-value">
+                {{ result.skipped }}
+            </strong>
+
+        </div>
+
+
+        <!-- Failed -->
+
+        <div class="
+                finance-import-stat
+                finance-import-stat--failed
+            ">
+
+            <div class="finance-import-stat-label">
+                Failed
+            </div>
+
+            <strong class="finance-import-stat-value">
+                {{ result.failed }}
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    {% if result.errors %}
+
+    <!-- =============================================
+                 Errors
+                 ============================================= -->
+
+    <div class="finance-import-errors">
+
+        <h2>
+            Import Errors
+        </h2>
+
+        <table class="finance-import-error-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Row
+                    </th>
+
+                    <th>
+                        Error
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for error in result.errors %}
+
+                <tr>
+
+                    <td>
+                        {{ error.row }}
+                    </td>
+
+                    <td class="finance-import-error-message">
+                        {{ error.message }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
