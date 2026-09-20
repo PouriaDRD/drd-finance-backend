@@ -14,6 +14,10 @@ from .transactions import (
     TransactionDeleteAPIView,
 )
 
+from .exports import (
+    CurrentMonthTransactionsExportAPIView,
+)
+
 __all__ = [
     "MyCategoriesAPIView",
     "MyActiveCategoriesAPIView",
@@ -25,4 +29,5 @@ __all__ = [
     "TransactionCreateAPIView",
     "TransactionUpdateAPIView",
     "TransactionDeleteAPIView",
+    "CurrentMonthTransactionsExportAPIView",
 ]

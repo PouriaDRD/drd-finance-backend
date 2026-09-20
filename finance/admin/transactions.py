@@ -1,17 +1,51 @@
-from django.urls import path
-from django.contrib import admin
-from django.shortcuts import render
-from django.utils.html import format_html
-from django.http import HttpResponse, HttpRequest
-from django.db.models import Sum, Case, When, IntegerField, Count
+import jdatetime
 
-from finance.models import TransactionModel
+from django.contrib import admin
+from django.core.exceptions import PermissionDenied
+from django.db.models import (
+    Case,
+    IntegerField,
+    Sum,
+    When,
+)
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+)
+from django.shortcuts import render
+from django.urls import (
+    path,
+    reverse,
+)
+from django.utils import timezone
+from django.utils.html import format_html
+
 from finance.exports import (
     export_transactions_csv,
     export_transactions_excel,
 )
 from finance.forms import TransactionImportForm
 from finance.imports import TransactionImportService
+from finance.models import TransactionModel
+
+
+def _get_current_persian_period() -> tuple[int, int]:
+    """
+    Return current Jalali year and month using Django timezone.
+    """
+
+    now = timezone.now()
+
+    local_now = timezone.localtime(now) if timezone.is_aware(now) else now
+
+    persian_date = jdatetime.date.fromgregorian(
+        date=local_now.date(),
+    )
+
+    return (
+        persian_date.year,
+        persian_date.month,
+    )
 
 
 @admin.register(TransactionModel)
@@ -77,20 +111,19 @@ class TransactionAdmin(admin.ModelAdmin):
                     "id",
                     "user",
                     "category",
-                )
+                ),
             },
         ),
         (
             "Transaction",
             {
                 "fields": (
-                    # "type",
                     "amount",
                     "description",
                     "month",
                     "year",
                     "date",
-                )
+                ),
             },
         ),
         (
@@ -105,9 +138,9 @@ class TransactionAdmin(admin.ModelAdmin):
         ),
     )
 
-    # --------------------------------------------------
-    # Query Optimization
-    # --------------------------------------------------
+    # =========================================================
+    # Queryset
+    # =========================================================
 
     def get_queryset(self, request):
         return (
@@ -117,12 +150,11 @@ class TransactionAdmin(admin.ModelAdmin):
                 "user",
                 "category",
             )
-            .annotate(transaction_total=Count("id"))
         )
 
-    # --------------------------------------------------
+    # =========================================================
     # Display
-    # --------------------------------------------------
+    # =========================================================
 
     @admin.display(
         description="Amount",
@@ -179,7 +211,9 @@ class TransactionAdmin(admin.ModelAdmin):
             obj.get_type_display,
         )
 
-    @admin.display(description="Description")
+    @admin.display(
+        description="Description",
+    )
     def description_short(self, obj):
         if not obj.description:
             return "—"
@@ -189,59 +223,96 @@ class TransactionAdmin(admin.ModelAdmin):
 
         return f"{obj.description[:40]}..."
 
-    # --------------------------------------------------
-    # Actions
-    # --------------------------------------------------
+    # =========================================================
+    # Bulk actions
+    # =========================================================
 
-    @admin.action(description="Mark selected as Income")
-    def mark_as_income(self, request, queryset):
-        updated = queryset.update(type="income")
+    @admin.action(
+        description="Mark selected as Income",
+    )
+    def mark_as_income(
+        self,
+        request,
+        queryset,
+    ):
+        updated = queryset.update(
+            type="income",
+        )
 
         self.message_user(
             request,
-            f"{updated} transaction(s) marked as Income.",
+            (f"{updated} transaction(s) " "marked as Income."),
         )
 
-    @admin.action(description="Mark selected as Expense")
-    def mark_as_expense(self, request, queryset):
-        updated = queryset.update(type="expense")
+    @admin.action(
+        description="Mark selected as Expense",
+    )
+    def mark_as_expense(
+        self,
+        request,
+        queryset,
+    ):
+        updated = queryset.update(
+            type="expense",
+        )
 
         self.message_user(
             request,
-            f"{updated} transaction(s) marked as Expense.",
+            (f"{updated} transaction(s) " "marked as Expense."),
         )
 
-    @admin.action(description="Export selected transactions as CSV")
-    def export_selected_csv(self, request, queryset):
+    @admin.action(
+        description=("Export selected transactions as CSV"),
+    )
+    def export_selected_csv(
+        self,
+        request,
+        queryset,
+    ):
         queryset = queryset.select_related(
             "user",
             "category",
         )
 
-        return export_transactions_csv(queryset)
+        return export_transactions_csv(
+            queryset,
+            filename_prefix=("transactions_selected"),
+        )
 
-    @admin.action(description="Export selected transactions as Excel")
-    def export_selected_excel(self, request, queryset):
+    @admin.action(
+        description=("Export selected transactions as Excel"),
+    )
+    def export_selected_excel(
+        self,
+        request,
+        queryset,
+    ):
         queryset = queryset.select_related(
             "user",
             "category",
         )
 
-        return export_transactions_excel(queryset)
+        return export_transactions_excel(
+            queryset,
+            filename_prefix=("transactions_selected"),
+        )
 
-    # --------------------------------------------------
-    # Dashboard Summary
-    # --------------------------------------------------
+    # =========================================================
+    # Dashboard summary
+    # =========================================================
 
     def changelist_view(
         self,
         request,
         extra_context=None,
     ):
-
         extra_context = extra_context or {}
 
-        totals = self.get_queryset(request).aggregate(
+        queryset = self.get_queryset(
+            request,
+        )
+
+        totals = queryset.aggregate(
             income_total=Sum(
                 Case(
                     When(
@@ -250,7 +321,7 @@ class TransactionAdmin(admin.ModelAdmin):
                     ),
                     default=0,
                     output_field=IntegerField(),
-                )
+                ),
             ),
             expense_total=Sum(
                 Case(
@@ -260,7 +331,7 @@ class TransactionAdmin(admin.ModelAdmin):
                     ),
                     default=0,
                     output_field=IntegerField(),
-                )
+                ),
             ),
         )
 
@@ -268,16 +339,31 @@ class TransactionAdmin(admin.ModelAdmin):
 
         expense = totals["expense_total"] or 0
 
+        current_year, current_month = _get_current_persian_period()
+
+        current_month_name = TransactionModel(
+            year=current_year,
+            month=current_month,
+        ).get_persian_month_name()
+
         extra_context.update(
             {
-                "income_total": f"{income:,}",
-                "expense_total": f"{expense:,}",
+                "income_total": (f"{income:,}"),
+                "expense_total": (f"{expense:,}"),
                 "balance_total": (f"{income - abs(expense):,}"),
-                # Important:
-                # This can be used by your change-list
-                # template/button later.
-                "import_url": ("import/"),
-            }
+                "import_url": reverse(
+                    ("admin:" "finance_transaction_import"),
+                ),
+                ("export_current_month_" "csv_url"): reverse(
+                    ("admin:" "finance_transaction_" "export_current_month_csv"),
+                ),
+                ("export_current_month_" "excel_url"): reverse(
+                    ("admin:" "finance_transaction_" "export_current_month_excel"),
+                ),
+                "current_persian_year": (current_year),
+                "current_persian_month": (current_month),
+                "current_persian_month_name": (current_month_name),
+            },
         )
 
         return super().changelist_view(
@@ -285,75 +371,173 @@ class TransactionAdmin(admin.ModelAdmin):
             extra_context=extra_context,
         )
 
-    # =====================================================
-    # URLs
-    # =====================================================
+    # =========================================================
+    # Custom URLs
+    # =========================================================
 
     def get_urls(self):
-
         urls = super().get_urls()
 
         custom_urls = [
             path(
                 "import/",
-                self.admin_site.admin_view(self.import_view),
+                self.admin_site.admin_view(
+                    self.import_view,
+                ),
                 name=("finance_transaction_import"),
+            ),
+            path(
+                ("export/current-month/" "csv/"),
+                self.admin_site.admin_view(
+                    self.export_current_month_csv_view,
+                ),
+                name=("finance_transaction_" "export_current_month_csv"),
+            ),
+            path(
+                ("export/current-month/" "excel/"),
+                self.admin_site.admin_view(
+                    self.export_current_month_excel_view,
+                ),
+                name=("finance_transaction_" "export_current_month_excel"),
             ),
         ]
 
         return custom_urls + urls
 
-    # =====================================================
-    # Import View
-    # =====================================================
+    # =========================================================
+    # Current month export
+    # =========================================================
+
+    def _get_current_month_queryset(
+        self,
+        request: HttpRequest,
+    ):
+        year, month = _get_current_persian_period()
+
+        queryset = (
+            self.get_queryset(request)
+            .filter(
+                year=year,
+                month=month,
+            )
+            .select_related(
+                "user",
+                "category",
+            )
+            .order_by(
+                "-date",
+                "-created_at",
+            )
+        )
+
+        return (
+            queryset,
+            year,
+            month,
+        )
+
+    def export_current_month_csv_view(
+        self,
+        request: HttpRequest,
+    ) -> HttpResponse:
+        """
+        Export all current-month transactions
+        available to Django Admin.
+        """
+
+        if not self.has_view_permission(
+            request,
+        ):
+            raise PermissionDenied
+
+        queryset, year, month = self._get_current_month_queryset(
+            request,
+        )
+
+        return export_transactions_csv(
+            queryset,
+            filename_prefix=("transactions_current_month_" f"{year}_{month:02d}"),
+        )
+
+    def export_current_month_excel_view(
+        self,
+        request: HttpRequest,
+    ) -> HttpResponse:
+        """
+        Export all current-month transactions
+        available to Django Admin.
+        """
+
+        if not self.has_view_permission(
+            request,
+        ):
+            raise PermissionDenied
+
+        queryset, year, month = self._get_current_month_queryset(
+            request,
+        )
+
+        return export_transactions_excel(
+            queryset,
+            filename_prefix=("transactions_current_month_" f"{year}_{month:02d}"),
+        )
+
+    # =========================================================
+    # Import
+    # =========================================================
 
     def import_view(
         self,
         request: HttpRequest,
     ):
+        if not self.has_add_permission(
+            request,
+        ):
+            raise PermissionDenied
 
         result = None
+
         form = TransactionImportForm()
 
         if request.method == "POST":
-
             form = TransactionImportForm(
                 request.POST,
                 request.FILES,
             )
 
             if form.is_valid():
-
                 uploaded_file = form.cleaned_data["file"]
 
                 filename = uploaded_file.name.lower()
 
                 try:
-
-                    if filename.endswith(".csv"):
-
+                    if filename.endswith(
+                        ".csv",
+                    ):
                         result = TransactionImportService.import_csv(
                             user=request.user,
                             file=uploaded_file,
                         )
 
-                    elif filename.endswith(".xlsx"):
-
+                    elif filename.endswith(
+                        ".xlsx",
+                    ):
                         result = TransactionImportService.import_excel(
                             user=request.user,
                             file=uploaded_file,
                         )
 
                 except Exception as exc:
-
                     form.add_error(
                         "file",
-                        f"خطا در پردازش فایل: {exc}",
+                        ("خطا در پردازش فایل: " f"{exc}"),
                     )
 
         context = {
-            **self.admin_site.each_context(request),
-            "title": "Import Transactions",
+            **self.admin_site.each_context(
+                request,
+            ),
+            "title": ("Import Transactions"),
             "form": form,
             "result": result,
             "opts": self.model._meta,
@@ -361,6 +545,6 @@ class TransactionAdmin(admin.ModelAdmin):
 
         return render(
             request,
-            "admin/transaction/import.html",
+            ("admin/transaction/" "import.html"),
             context,
         )

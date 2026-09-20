@@ -11,9 +11,13 @@ from .views import (
     TransactionCreateAPIView,
     TransactionUpdateAPIView,
     TransactionDeleteAPIView,
+    CurrentMonthTransactionsExportAPIView,
 )
 
 urlpatterns = [
+    # =========================================================
+    # Categories
+    # =========================================================
     path(
         route="my-categories/",
         view=MyCategoriesAPIView.as_view(),
@@ -34,37 +38,51 @@ urlpatterns = [
         view=CategoryUpdateAPIView.as_view(),
         name="update-category",
     ),
+    # =========================================================
+    # Transactions
+    # =========================================================
     path(
         route="my-transactions/",
         view=MyTransactionsAPIView.as_view(),
         name="my-transactions",
     ),
+    # =========================================================
+    # Transaction Reports
+    # =========================================================
     path(
-        "my-transactions/summary/<int:year>/<int:month>/",
-        PersianMonthSummaryAPIView.as_view(),
+        route="my-transactions/summary/<int:year>/<int:month>/",
+        view=PersianMonthSummaryAPIView.as_view(),
         name="transaction-month-summary",
     ),
     path(
-        "my-transactions/summary/<int:year>/",
-        YearlySummaryAPIView.as_view(),
+        route="my-transactions/summary/<int:year>/",
+        view=YearlySummaryAPIView.as_view(),
         name="transaction-yearly-summary",
     ),
-    # Create transaction
+    # =========================================================
+    # Transaction Export
+    # =========================================================
     path(
-        "my-transactions/create/",
-        TransactionCreateAPIView.as_view(),
+        route="my-transactions/export/current-month/<str:file_type>/",
+        view=CurrentMonthTransactionsExportAPIView.as_view(),
+        name="transaction-current-month-export",
+    ),
+    # =========================================================
+    # Transaction CRUD
+    # =========================================================
+    path(
+        route="my-transactions/create/",
+        view=TransactionCreateAPIView.as_view(),
         name="transaction-create",
     ),
-    # Update transaction
     path(
-        "my-transactions/<uuid:transaction_id>/update/",
-        TransactionUpdateAPIView.as_view(),
+        route="my-transactions/<uuid:transaction_id>/update/",
+        view=TransactionUpdateAPIView.as_view(),
         name="transaction-update",
     ),
-    # Delete transaction
     path(
-        "my-transactions/<uuid:transaction_id>/delete/",
-        TransactionDeleteAPIView.as_view(),
+        route="my-transactions/<uuid:transaction_id>/delete/",
+        view=TransactionDeleteAPIView.as_view(),
         name="transaction-delete",
     ),
 ]
