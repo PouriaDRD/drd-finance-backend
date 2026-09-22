@@ -11,8 +11,9 @@ from .views import (
     TransactionCreateAPIView,
     TransactionUpdateAPIView,
     TransactionDeleteAPIView,
-    CurrentMonthTransactionsExportAPIView,
+    PersianMonthTransactionsExportAPIView,
 )
+
 
 urlpatterns = [
     # =========================================================
@@ -38,6 +39,7 @@ urlpatterns = [
         view=CategoryUpdateAPIView.as_view(),
         name="update-category",
     ),
+
     # =========================================================
     # Transactions
     # =========================================================
@@ -46,6 +48,7 @@ urlpatterns = [
         view=MyTransactionsAPIView.as_view(),
         name="my-transactions",
     ),
+
     # =========================================================
     # Transaction Reports
     # =========================================================
@@ -59,14 +62,19 @@ urlpatterns = [
         view=YearlySummaryAPIView.as_view(),
         name="transaction-yearly-summary",
     ),
+
     # =========================================================
     # Transaction Export
     # =========================================================
     path(
-        route="my-transactions/export/current-month/<str:file_type>/",
-        view=CurrentMonthTransactionsExportAPIView.as_view(),
-        name="transaction-current-month-export",
+        route=(
+            "my-transactions/export/"
+            "<int:year>/<int:month>/<str:file_type>/"
+        ),
+        view=PersianMonthTransactionsExportAPIView.as_view(),
+        name="transaction-month-export",
     ),
+
     # =========================================================
     # Transaction CRUD
     # =========================================================
